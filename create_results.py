@@ -19,7 +19,7 @@ transform = transforms.Compose(
 testset = torchvision.datasets.MNIST(
     root="./data", train=False, download=True, transform=transform
 )
-img, label = testset[10]
+img, label = testset[0]
 results = model(coords, img, label)[:, np.newaxis]
 
 # save results
