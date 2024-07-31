@@ -5,12 +5,10 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from torch import nn
 import torch.nn.functional as F
-import lightning as pl
 from typing import Any, Callable, List, Optional, Type, Union
 from torchvision import transforms
 from torch import Tensor
 import torch
-from tqdm.notebook import tqdm
 import numpy as np
 
 
@@ -261,42 +259,8 @@ class MyNet(nn.Module):
         return self._forward_impl(x)
     
 
-class WeldingClassifier(pl.LightningModule):
-    def __init__(self, block, layers, num_classes, **kwargs):
-        super(WeldingClassifier, self).__init__()
-        self.model = MyNet(block, layers, num_classes, **kwargs)
-        self.criterion = nn.CrossEntropyLoss()
-    
-    def forward(self, x):
-        return self.model(x)
-    
-    def training_step(self, batch, batch_idx):
-        x, y = batch
-        outputs = self.model(x)
-        loss = self.criterion(outputs, y)
-        self.log('train_loss', loss)
-        
-        optimizer = self.optimizers()
-        lr = optimizer.param_groups[0]['lr']
-        self.log('learning_rate', lr )
-
-        return loss
-    
-    def validation_step(self, batch, batch_idx):
-        x, y = batch
-        outputs = self.model(x)
-        loss = self.criterion(outputs, y)
-        self.log('val_loss', loss)
-        return loss
-    
-    def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(self.parameters(), lr=0.001, weight_decay=1e-4)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10)
-        return [optimizer], [scheduler]
-
-
-clf = WeldingClassifier(BasicBlock, [3, 4, 6, 3], num_classes=6)
-clf.load_state_dict(torch.load('model_1.pth', weights_only=True))
+clf = MyNet(Bottleneck, [3, 4, 6, 3], num_classes=6)
+clf.load_state_dict(torch.load('model_2.pth', weights_only=True))
 clf.eval()
 
 img_transform = lambda img, angle, brightness: transforms.functional.rotate(
@@ -350,3 +314,14 @@ if __name__ == "__main__":
     
     results = model(coords, img, label)
     print(results)
+    
+    num = 3
+    num_correct = 0
+
+    for idx in range(num):
+        y = train_dataset.__getitem__(idx)[1]
+        y_pred = clf(train_dataset.__getitem__(idx)[0].unsqueeze(0))
+        num_correct += (y_pred.argmax(dim=1) == y)
+
+    acc = num_correct / num
+    print(acc)
