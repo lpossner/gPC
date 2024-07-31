@@ -39,7 +39,7 @@ pygpc.plot_gpc(session=session,
                n_grid=list(session.gpc[0].grid.coords.shape),
                coords=session.gpc[0].grid.coords,
                results=results,
-               output_idx = [0, 1, 2]
+               output_idx = [0]
                )
 
 plt.show()
