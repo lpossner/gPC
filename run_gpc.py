@@ -5,13 +5,14 @@ if __name__ == '__main__':
     from collections import OrderedDict
 
 
-    # seed RNG
+    # seed RNGs
     seed = 1
     np.random.seed(seed)
 
     # define parameters
     parameters = OrderedDict()
-    parameters["noise"] = pygpc.Beta(pdf_shape=[1, 1], pdf_limits=[0, 10])
+    parameters["angle"] = pygpc.Beta(pdf_shape=[2, 2], pdf_limits=[-90, 90])
+    parameters["brightness"] = pygpc.Beta(pdf_shape=[2, 2], pdf_limits=[0, 2])
 
     # load coords
     coords = np.load("data/coords.npy")
@@ -25,9 +26,9 @@ if __name__ == '__main__':
     options["method"] = "reg"
     options["solver"] = "Moore-Penrose"
     options["settings"] = None
-    options["order"] = [10]
-    options["order_max"] = 10
-    options["interaction_order"] = 1
+    options["order"] = [7, 7]
+    options["order_max"] = sum(options["order"])
+    options["interaction_order"] = sum(options["order"])
     options["error_type"] = "loocv"
     options["error_norm"] = "absolute"
     options["n_samples_validation"] = None

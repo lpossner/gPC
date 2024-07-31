@@ -1,109 +1,64 @@
+import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
-import numpy as np
-from sklearn.datasets import make_moons
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, precision_score, recall_score
+import torch.nn.functional as F
+import torchvision
+import torchvision.transforms as transforms
 
 
-def moons_model(noise, runs=1, verbose=False, random_state=None):
-    # Lists for results
-    accuracy_lst = []
-    precision_lst = []
-    recall_lst = []
-    for _ in range(runs):
-        # Generate moon dataset
-        X, y = make_moons(n_samples=1000, noise=noise, random_state=random_state)
+# Define the neural network
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.fc1 = nn.Linear(28 * 28, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, 10)
 
-        # Split into train and test sets
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.3, random_state=random_state
-        )
+    def forward(self, x):
+        x = x.view(-1, 28 * 28)
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
 
-        # Standardize the dataset
-        scaler = StandardScaler()
-        X_train = scaler.fit_transform(X_train)
-        X_test = scaler.transform(X_test)
 
-        # Convert to PyTorch tensors
-        X_train = torch.tensor(X_train, dtype=torch.float32)
-        y_train = torch.tensor(y_train, dtype=torch.long)
-        X_test = torch.tensor(X_test, dtype=torch.float32)
-        y_test = torch.tensor(y_test, dtype=torch.long)
+# Load the model
+net = Net()
+net.load_state_dict(torch.load("./data/model.pth", weights_only=True))
+net.eval()
 
-        # Create DataLoader
-        train_dataset = TensorDataset(X_train, y_train)
-        test_dataset = TensorDataset(X_test, y_test)
+img_transform = lambda img, angle, brightness: transforms.functional.rotate(
+    transforms.functional.adjust_brightness(img, brightness), angle
+)
+# scale_proba = lambda proba: proba * 20 - 10
+scale_proba = lambda proba: proba
 
-        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-        # Define the neural network model
-        class MoonClassifier(nn.Module):
-            def __init__(self):
-                super(MoonClassifier, self).__init__()
-                self.fc1 = nn.Linear(2, 16)
-                self.fc2 = nn.Linear(16, 16)
-                self.fc3 = nn.Linear(16, 2)
+def model(coords, img, label):
+    probas = []
+    with torch.no_grad():
+        for angle, brightness in coords:
+            proba = scale_proba(
+                F.softmax(net(img_transform(img, angle, brightness)), dim=1)
+            )[0, label].item()
+            probas.append(proba)
+    return np.array(probas)
 
-            def forward(self, x):
-                x = torch.relu(self.fc1(x))
-                x = torch.relu(self.fc2(x))
-                x = self.fc3(x)
-                return x
 
-        model = MoonClassifier()
+if __name__ == "__main__":
 
-        # Loss function and optimizer
-        criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(model.parameters(), lr=0.001)
-
-        # Train the model
-        num_epochs = 50
-
-        for epoch in range(num_epochs):
-            model.train()
-            running_loss = 0.0
-            for inputs, labels in train_loader:
-                optimizer.zero_grad()
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
-                loss.backward()
-                optimizer.step()
-                running_loss += loss.item()
-
-            if verbose:
-                print(
-                    f"""
-                    Epoch {epoch+1}/{num_epochs}, 
-                    Loss: {running_loss/len(train_loader):.4f}
-                    """
-                )
-
-        # Evaluate the model
-        model.eval()
-        y_true = []
-        y_pred = []
-        with torch.no_grad():
-            for inputs, labels in test_loader:
-                outputs = model(inputs)
-                _, predicted = torch.max(outputs, 1)
-                y_true.extend(labels.cpu().numpy())
-                y_pred.extend(predicted.cpu().numpy())
-
-        # Calculate metrics
-        accuracy_lst.append(accuracy_score(y_true, y_pred))
-        precision_lst.append(precision_score(y_true, y_pred))
-        recall_lst.append(recall_score(y_true, y_pred))
-
-    return (
-        np.mean(accuracy_lst),
-        np.mean(precision_lst),
-        np.mean(recall_lst),
-        model,
-        X_test,
-        y_test,
+    N = 100
+    transform = transforms.Compose(
+        [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))]
     )
+    testset = torchvision.datasets.MNIST(
+        root="./data", train=False, download=True, transform=transform
+    )
+    img, label = testset[0]
+
+    angles = np.random.uniform(-90, 90, size=N)
+    brightness = np.random.uniform(1, 3, size=N)
+    coords = np.stack([angles, brightness], axis=1)
+
+    results = model(coords, img, label)
+    print(results)

@@ -1,7 +1,8 @@
 import os
 import numpy as np
-from tqdm import tqdm
-from model import moons_model
+import torchvision
+import torchvision.transforms as transforms
+from model import model
 
 
 # seed RNG
@@ -12,16 +13,14 @@ np.random.seed(seed)
 coords = np.load("data/coords.npy")
 
 # run simulations with coords
-accuracy_lst = []
-precision_lst = []
-recall_lst = []
-for noise in tqdm(coords):
-    accuracy, precision, recall, _, _, _ = moons_model(noise=noise.item(),
-                                                       runs=30)
-    accuracy_lst.append(accuracy)
-    precision_lst.append(precision)
-    recall_lst.append(recall)
-results = np.stack([accuracy_lst, precision_lst, recall_lst])
+transform = transforms.Compose(
+    [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))]
+)
+testset = torchvision.datasets.MNIST(
+    root="./data", train=False, download=True, transform=transform
+)
+img, label = testset[10]
+results = model(coords, img, label)[:, np.newaxis]
 
 # save results
 os.makedirs("data", exist_ok=True)
