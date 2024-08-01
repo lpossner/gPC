@@ -42,4 +42,5 @@ pygpc.plot_gpc(session=session,
                output_idx = [0]
                )
 
+plt.savefig("gPC.png")
 plt.show()

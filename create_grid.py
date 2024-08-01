@@ -10,7 +10,7 @@ np.random.seed(seed)
 
 # define the properties of the random variables
 parameters = OrderedDict()
-parameters["angle"] = pygpc.Beta(pdf_shape=[2, 2], pdf_limits=[-90, 90])
+# parameters["angle"] = pygpc.Beta(pdf_shape=[2, 2], pdf_limits=[-90, 90])
 parameters["brightness"] = pygpc.Beta(pdf_shape=[2, 2], pdf_limits=[0, 2])
 
 # create grid object
