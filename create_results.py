@@ -46,7 +46,7 @@ train_dataset = MyDataset(
     train=True
 )
 
-img, label = train_dataset[0]
+img, label = train_dataset[50]
 
 results = model(coords, img, label)[:, np.newaxis]
 

@@ -270,8 +270,8 @@ img_transform = lambda img, angle, brightness: transforms.functional.rotate(
 def model(coords, img, label):
     probas = []
     with torch.no_grad():
-        for angle, brightness in coords:
-            proba = F.softmax(clf(img_transform(img, angle, brightness)), dim=1)[0, label].item()
+        for brightness in coords:
+            proba = F.softmax(clf(img_transform(img, 0, brightness[0])), dim=1)[0, label].item()
             probas.append(proba)
     return np.array(probas)
 
@@ -315,9 +315,13 @@ if __name__ == "__main__":
     results = model(coords, img, label)
     print(results)
     
-    num = 3
-    num_correct = 0
+    idx = 50
+    y = train_dataset.__getitem__(idx)[1]
+    y_pred = clf(train_dataset.__getitem__(idx)[0].unsqueeze(0))
+    print(y_pred.argmax(dim=1) == y)
 
+    num = len(train_dataset)
+    num_correct = 0
     for idx in range(num):
         y = train_dataset.__getitem__(idx)[1]
         y_pred = clf(train_dataset.__getitem__(idx)[0].unsqueeze(0))

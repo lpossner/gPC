@@ -12,7 +12,7 @@ if __name__ == '__main__':
     # define parameters
     parameters = OrderedDict()
     parameters["angle"] = pygpc.Beta(pdf_shape=[2, 2], pdf_limits=[-90, 90])
-    parameters["brightness"] = pygpc.Beta(pdf_shape=[2, 2], pdf_limits=[0, 2])
+    # parameters["brightness"] = pygpc.Beta(pdf_shape=[2, 2], pdf_limits=[0, 2])
 
     # load coords
     coords = np.load("data/coords.npy")
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     options["method"] = "reg"
     options["solver"] = "Moore-Penrose"
     options["settings"] = None
-    options["order"] = [7, 7]
+    options["order"] = [7]
     options["order_max"] = sum(options["order"])
     options["interaction_order"] = sum(options["order"])
     options["error_type"] = "loocv"
