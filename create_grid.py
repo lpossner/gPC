@@ -10,8 +10,8 @@ np.random.seed(seed)
 
 # define the properties of the random variables
 parameters = OrderedDict()
-parameters["angle"] = pygpc.Beta(pdf_shape=[2, 2], pdf_limits=[-90, 90])
-parameters["brightness"] = pygpc.Beta(pdf_shape=[2, 2], pdf_limits=[0, 2])
+parameters["angle"] = pygpc.Beta(pdf_shape=[1, 1], pdf_limits=[-45, 45])
+parameters["brightness"] = pygpc.Beta(pdf_shape=[1, 1], pdf_limits=[0.5, 2])
 
 # create grid object
 grid = pygpc.LHS(parameters_random=parameters, options={"seed": seed, "criterion": "ese"}, n_grid=1000)

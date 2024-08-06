@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 from collections import OrderedDict
 
 
+# set paths
 folder = "data"
 session_filename = "data/gPC.pkl"
 results_filename = "data/gPC"
@@ -36,7 +37,7 @@ print(gsens)
 pygpc.plot_gpc(session=session,
                coeffs=coeffs,
                random_vars=session.problem.parameters_keys,
-               n_grid=list(session.gpc[0].grid.coords.shape),
+               n_grid=[100, 100],
                coords=session.gpc[0].grid.coords,
                results=results,
                output_idx = [0]
